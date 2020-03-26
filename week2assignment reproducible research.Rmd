@@ -1,0 +1,90 @@
+---
+title: "week 2 assignment for Reproducible Research"
+author: "scs"
+date: "25/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Text chunk
+
+The data used for this assignment is given in the "Activity Monitoring
+
+Data". This is used for completion of the week2 assignment for 
+
+"Reproducible Research".The data is collected by some One for two months 
+
+from October and November 2012 by using the personal activity monitoring 
+
+device  and include the number of steps taken in 5 minute intervals each 
+
+day. 
+
+##code chunk
+```{r}
+## week 2 assignment for Reproducible Research
+#To set the working directory
+setwd("C:/Users/hp/desktop/coursera")
+library(ggplot2)# loaded ggplot2
+library(lubridate)
+# point1: code for reading the dataset
+
+data<-read.csv("./activity.csv") 
+data #checked the data
+#point2:histogram of total no. of steps each day
+x<-tapply(data$steps,data$date,sum,na.rm=TRUE)
+x
+png(filename="plot5.2.1.png")
+qplot(x,xlab = "Total Steps Per Day",ylab = "Frequency")
+dev.off()
+#point3:mean and median no. of steps taken each day
+x1<-mean(x)
+x1
+x2<-median(x)
+x2
+#point4:Time series plot of the average number of steps taken
+x3<-aggregate(x=list(meansteps=data$steps),by=list(interval=data$interval),FUN=mean,na.rm=TRUE)
+x3
+png(filename = "plot5.2.2.png")
+ggplot(data=x3, aes(x=interval, y=meansteps,colour="black")) +
+  geom_line() + 
+  xlab("interval(five minutes)") +
+  ylab("average number of steps taken") 
+dev.off()
+#point5:5-min.interval that, on average, contains the maximum number of steps
+max_step_interval<-which.max(x3$meansteps)
+max_step_interval
+time_max_step_interval<-gsub("([0-9]{1,2})([0-9]{2})","\\1:\\2",x3[max_step_interval,"interval"])
+time_max_step_interval
+
+#point6:Code for imputing missing data
+
+x4<-length(which(is.na(data$steps))) #number of missing values
+x4
+data_imputed<-data
+data_imputed$steps<-impute(data$steps,fun=mean) #replaced missing value by average
+data_imputed
+#point7:Histogram of the total number of steps taken each day after missing values are imputed
+x5<-steps_imputed_byday<-tapply(data_imputed$steps,data_imputed$date,sum)
+x5
+png(filename = "plot5.2.3.png")
+qplot(x5,xlab="Total steps per day (imputed)",ylab = "Frequency using binwidth 1000",binwidth=1000)
+dev.off()
+#point8:Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+data_imputed$dateType<-ifelse(as.POSIXlt(data_imputed$date)$wday %in% c(0,6),"weekend","weekday")
+data_imputed$dateType
+x6<-average_data_imputed<-aggregate(steps~interval+dateType,data=data_imputed,mean)
+x6
+png(filename = "plot5.2.4.png")
+ggplot(x6, aes(interval, steps)) + 
+  geom_line() + 
+  facet_grid(dateType ~ .) +
+  xlab("5-minute interval") + 
+  ylab("avarage number of steps")
+dev.off()
+
+```
+
