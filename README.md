@@ -77,8 +77,9 @@ assignment so you do not have to download the data separately.
 ### Loading and preprocessing the data
 
 Show any code that is needed to
-
-1. Load the data (i.e. `read.csv()`)
+First of all set the working directory and downloaded the data to the working directory.
+Installed the required packages such as ggplot2,lubridate,Hmisc etc.
+1. Load the data (i.e. `read.csv()`) 
 
 2. Process/transform the data (if necessary) into a format suitable for your analysis
 
