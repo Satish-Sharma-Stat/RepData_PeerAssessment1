@@ -1,87 +1,133 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Reproducible Research week 2 assignment"
+author: "scs"
+date: "27/3/2020"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Reproducible Research: Peer Assessment 1
+
+```{r, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+library(ggplot2)
+library(scales)
+library(Hmisc)
+```
 
 ## Loading and preprocessing the data
-##code chunk
+##point 1:
+##1.1:Load the data (i.e. read.csv())
 ```{r}
-## week 2 assignment for Reproducible Research
-#To set the working directory
-setwd("C:/Users/hp/desktop/coursera")
-library(ggplot2)# loaded ggplot2
-library(lubridate)
-# point1: code for reading the dataset
+if(!file.exists('activity.csv')){
+    unzip('activity.zip')
+}
+data <- read.csv('activity.csv')
+```
+## 1.2: Process/transform the data (if necessary) into a format suitable for your analysis
+```{r}
+#data$interval <- strptime(gsub("([0-9]{1,2})([0-9]{2})", "\\1:\\2", data$interval), format='%H:%M')
+```
 
-data<-read.csv("./activity.csv") 
-data #checked the data
-#point2:histogram of total no. of steps each day
-x<-tapply(data$steps,data$date,sum,na.rm=TRUE)
-x
+## point2:
+##2.1:What is mean total number of steps taken per day?
+```{r}
+x<-stepsperDay <- tapply(data$steps, data$date, sum, na.rm=TRUE)
+```
 
-qplot(x,xlab = "Total Steps Per Day",ylab = "Frequency")
+##2.2: Make a histogram of the total number of steps taken each day
+```{r}
+qplot(x,geom = "histogram", xlab='Total steps per day', ylab='Frequency using binwith 500', binwidth=500)
+```
+
+## 2.3: Calculate and report the mean and median total number of steps taken per day
+```{r}
+x1<- mean(x)   #mean of steps per day
+x2 <- median(x)  #median of steps per day
+
+```
+* Mean: `r x1`
+* Median:  `r x2`
+
+-----
+##point3:What is the average daily activity pattern?
+##3.1: to make time series plot
+```{r}
+x3<- aggregate(x=list(meanSteps=data$steps), by=list(interval=data$interval), FUN=mean, na.rm=TRUE) #average steps per time block
+
+ggplot(data=x3, aes(x=interval, y=meanSteps)) +
+    geom_line() +
+    xlab("5-minute interval") +
+    ylab("average number of steps taken") 
+```
+* Average Steps per time Block:`r x3`
+
+## 3.2: Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+x4<-maxsteps <- which.max(x3$meanSteps)
+
+x5 <-  gsub("([0-9]{1,2})([0-9]{2})", "\\1:\\2", x3[x4,'interval'])  #time for max steps
 
 ```
 
+* Max no. of  Steps at: `r x5`
 
-## What is mean total number of steps taken per day?
+----
+## point4:Imputing missing values
+##4.1:Calculate and report the total number of missing values in the dataset 
 ```{r}
-#point3:mean and median no. of steps taken each day
-x1<-mean(x)
-x1
-x2<-median(x)
-x2
-```
-## What is the average daily activity pattern?
-```{r}
-#point4:Time series plot of the average number of steps taken
-x3<-aggregate(x=list(meansteps=data$steps),by=list(interval=data$interval),FUN=mean,na.rm=TRUE)
-x3
-
-ggplot(data=x3, aes(x=interval, y=meansteps,colour="black")) +
-  geom_line() + 
-  xlab("interval(five minutes)") +
-  ylab("average number of steps taken") 
-
-#point5:5-min.interval that, on average, contains the maximum number of steps
-max_step_interval<-which.max(x3$meansteps)
-max_step_interval
-time_max_step_interval<-gsub("([0-9]{1,2})([0-9]{2})","\\1:\\2",x3[max_step_interval,"interval"])
-time_max_step_interval
+missingvalues<- length(which(is.na(data$steps))) # number of missing values
 ```
 
-## Imputing missing values
+* Number of missing values: `r missingvalues`
+
+##4.2: Devise a strategy for filling in all of the missing values in the dataset.
+#The missing values will be replaced by mean.
+## 4.3:Create a new dataset that is equal to the original dataset but with the missing data filled in.
 ```{r}
-#point6:Code for imputing missing data
-library(Hmisc)
-x4<-length(which(is.na(data$steps))) #number of missing values
-x4
-data_imputed<-data
-data_imputed$steps<-impute(data$steps,fun=mean) #replaced missing value by average
-data_imputed
+data_imputed <- data
+data_imputed$steps<-impute(data$steps, fun=mean) 
 ```
 
-## Are there differences in activity patterns between weekdays and weekends?
+##### 4.4: Make a histogram of the total number of steps taken each day.Calculate and report the mean and median total number of steps taken per day. 
 ```{r}
-#point7:Histogram of the total number of steps taken each day after missing values are imputed
-x5<-steps_imputed_byday<-tapply(data_imputed$steps,data_imputed$date,sum)
-x5
-
-qplot(x5,xlab="Total steps per day (imputed)",ylab = "Frequency using binwidth 1000",binwidth=1000)
-
-#point8:Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
-data_imputed$dateType<-ifelse(as.POSIXlt(data_imputed$date)$wday %in% c(0,6),"weekend","weekday")
-
-data_imputed$dateType
-x6<-average_data_imputed<-aggregate(steps~interval+dateType,data=data_imputed,mean)
-x6
-
-ggplot(x6, aes(interval, steps)) + 
-  geom_line() + 
-  facet_grid(dateType ~ .) +
-  xlab("5-minute interval") + 
-  ylab("avarage number of steps")
+x6<-stepsperday_imputed <- tapply(data_imputed$steps, data_imputed$date, sum)
+qplot(x6,geom="histogram", xlab='Total steps per day (Imputed)', ylab='Frequency using binwith 500', binwidth=500)
+#calculation of mean and median of the imputed data
+x7<-Meanofimputeddata <- mean(x6)
+x8<-Medianofimputeddata <- median(x6)
 ```
+* Mean (Imputed): `r x7`
+* Median (Imputed):  `r x8`
+Mean and median of the imputed data differ from the mean and median of
+
+the original data (datawith out imputing). Imputed data mean and 
+
+median are same. The impact of imputing is that it make the 
+
+distribution of the imputed data symmetric. The mean of the original 
+
+data was less than its median. It makes the distribution negatively skewed.
+
+##point5: Are there differences in activity patterns between weekdays and weekends?
+##5.1 :Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{r}
+data_imputed$dateType <-  ifelse(as.POSIXlt(activityDataImputed$date)$wday %in% c(0,6), 'weekend', 'weekday')
+```
+
+##5.2: Make a panel plot containing a time series plot
+
+```{r}
+averageddata_imputed <- aggregate(steps ~ interval + dateType, data=data_imputed, mean)
+ggplot(averageddata_imputed, aes(interval, steps)) + 
+    geom_line() + 
+    facet_grid(dateType ~ .) +
+    xlab("5-minute interval") + 
+    ylab("avarage number of steps")
+```
+
+----
